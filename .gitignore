@@ -60,3 +60,7 @@ __*
 
 # Monokle
 .monokle
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/.gitignore
+/.idea/modules.xml
+/.idea/vcs.xml
