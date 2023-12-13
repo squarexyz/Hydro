@@ -75,6 +75,9 @@
         <span class="icon icon-comment--text"></span> {{ _('Solutions') }}{% if solutionCount !== undefined %} ({{ solutionCount }}){% endif %}
       </a></li>
     {% endif %}
+      <li class="menu__item"><a class="menu__link{% if page_name == 'problem_note' %} active{% endif %}" href="{{ url('problem_note', pid=pdoc.pid|default(pdoc.docId)) }}">
+        <span class="icon icon-comment--text"></span> {{ _('Notes') }}{% if noteCount !== undefined %} ({{ noteCount }}){% endif %}
+      </a></li>
       <li class="menu__item"><a class="menu__link{% if page_name == 'problem_files' %} active{% endif %}" href="{{ url('problem_files', pid=pdoc.pid|default(pdoc.docId)) }}">
         <span class="icon icon-file"></span> {{ _('Files') }}
       </a></li>
