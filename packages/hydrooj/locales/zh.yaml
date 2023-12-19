@@ -9,6 +9,7 @@ __langname: 简体中文
 '{0} problems': '{0} 道题'
 '{0} sections': '{0} 小节'
 '{0} solutions': '{0} 条题解'
+'{0} notes': '{0} 条笔记'
 '{0} views': '{0} 次查看'
 '{0}: Permissions': '{0}: 权限'
 '{0}: Roles': '{0}: 角色'
@@ -191,6 +192,7 @@ Create homework: 创建作业
 Create Homework: 创建作业
 Create Link: 创建链接
 Create problem solutions: 创建题解
+Create problem notes: 创建笔记
 Create Problem: 创建题目
 Create problems: 创建题目
 Create Role: 创建角色
@@ -228,6 +230,10 @@ Delete own problem solution replies: 删除题解中自己的回复
 Delete own problem solutions: 删除自己的题解
 Delete problem solution replies: 删除题解的回复
 Delete problem solutions: 删除题解
+Delete own problem note replies: 删除笔记中自己的回复
+Delete own problem notes: 删除自己的笔记
+Delete problem note replies: 删除笔记的回复
+Delete problem notes: 删除笔记
 Delete Selected Roles: 删除所选角色
 delete: 删除
 Delete: 删除
@@ -301,11 +307,15 @@ Edit own discussions: 修改自己的讨论
 Edit own homework: 修改自己的作业
 Edit own problem solution replies: 修改题解中自己的回复
 Edit own problem solutions: 修改自己的题解
+Edit own problem note replies: 修改笔记中自己的回复
+Edit own problem notes: 修改笔记
 Edit own problems: 修改自己的题目
 Edit own training plans: 修改自己的训练计划
 Edit permissions of a role: 修改角色权限
 Edit problem solution replies: 修改题解的回复
 Edit problem solutions: 修改题解
+Edit problem note replies: 修改笔记的回复
+Edit problem notes: 修改笔记
 Edit Problem: 编辑题目
 Edit problems: 修改题目
 Edit Profile: 编辑个人信息
@@ -508,6 +518,7 @@ No Permission to Create a Discussion: 您没有权限创建讨论
 No Permission to Submit: 您没有权限递交
 No problem.: 没有题目。
 No solutions so far...: 目前还没有题解...
+No notes so far...: 目前还没有笔记...
 No Submissions: 没有递交
 No testdata at current.: 暂无测试数据。
 No user is allowed to join this domain: 没有用户可以自助加入此域
@@ -563,6 +574,7 @@ perm_discussion: 讨论
 perm_general: 一般
 perm_homework: 作业
 perm_problem_solution: 题解
+perm_problem_note: 笔记
 perm_problem: 题库
 perm_ranking: 排名
 perm_record: 记录
@@ -604,6 +616,7 @@ problem_files: 题目文件
 problem_import: 导入题目
 problem_main: 题库
 problem_solution: 题解
+problem_note: 笔记
 problem_statistics: 题目统计
 problem_submit: 递交代码
 problem-category-delim: '|'
@@ -654,6 +667,7 @@ Repeat Password: 重复密码
 Replies per page: 每页展示的回复数量
 Reply discussions: 回复讨论
 Reply problem solutions: 回复题解
+Reply problem notes: 回复笔记
 reply: 回复
 Reply: 回复
 Report: 举报
@@ -886,6 +900,7 @@ View Owned Problems: 查看自己的题目
 View Owned Training Plans: 查看自己的训练计划
 View problem solutions after accept: 题目通过后查看题解
 View problem solutions: 查看题解
+View problem notes: 查看笔记
 View Problem: 查看题目
 View problems: 查看题目
 View ranking: 查看排名
@@ -895,6 +910,7 @@ View: 查看
 Visible to registered users: 对注册用户可见
 Visit: 查看
 Vote problem solutions: 为题解投票
+Vote problem notes: 为笔记投票
 Vote: 投票
 We will check code similarity after this contest.: 我们会在赛后检查代码相似度。
 WeChat Visibility: 微信可见性
@@ -912,6 +928,7 @@ With this feature, you can import problems that you can view from a site to here
 With this feature, you can import problems that you can view from a site to here. Their title, content, tags and categories will be imported.: 您可以通过这个功能将其他 OJ 的题目导入到本站。题目的标题、题面、标签和分类都将会被自动导入。
 Write Your Comment: 发表您的评论
 Write Your Solution: 发表您的题解
+Write Your Note: 发表您的笔记
 WYSIWYG: 所见即所得
 Year: 年
 You are not allowed to join the domain. The link is either invalid or expired.: 您无法加入该域，链接无效或已过期。

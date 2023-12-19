@@ -127,6 +127,9 @@ export const DocumentNotFoundError = Err('DocumentNotFoundError', NotFoundError,
 
 export const ProblemNotFoundError = Err('ProblemNotFoundError', DocumentNotFoundError, 'Problem {1} not found.');
 export const SolutionNotFoundError = Err('SolutionNotFoundError', DocumentNotFoundError, 'Solution {1} not found.');
+
+export const NoteNotFoundError = Err('NoteNotFoundError', DocumentNotFoundError, 'Note {1} not found.');
+
 export const TrainingNotFoundError = Err('TrainingNotFoundError', DocumentNotFoundError, 'Training {1} not found.');
 export const ContestNotFoundError = Err('ContestNotFoundError', DocumentNotFoundError, 'Contest {1} not found.');
 export const DiscussionNotFoundError = Err('DiscussionNotFoundError', DocumentNotFoundError, 'Discussion {1} not found.');

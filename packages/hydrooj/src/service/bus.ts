@@ -12,6 +12,7 @@ import type {
 } from '../interface';
 import type { DocType } from '../model/document';
 import type { ConnectionHandler, Handler } from './server';
+import {ProblemNoteHandler} from "../handler/problem";
 
 export type Disposable = () => void;
 export type VoidReturn = Promise<any> | any;
@@ -21,7 +22,7 @@ type LifecycleEvents = Record<`app/load/${ModuleCategories}`, () => VoidReturn>;
 type MapHandlerEvents<N extends string, H extends Handler> = Record<`handler/${HookType}/${N}`, (thisArg: H) => VoidReturn>;
 type KnownHandlerEvents =
     MapHandlerEvents<'UserRegister', UserRegisterHandler>
-    & MapHandlerEvents<'ProblemSolution', ProblemSolutionHandler>;
+    & MapHandlerEvents<'ProblemSolution', ProblemSolutionHandler> & MapHandlerEvents<'ProblemNote', ProblemNoteHandler>;
 type HandlerEvents =
     KnownHandlerEvents
     & Record<`handler/${HookType}/${string}`, (thisArg: Handler & Record<string, any>) => VoidReturn>

@@ -10,7 +10,7 @@ import parser from '@hydrooj/utils/lib/search';
 import { sortFiles, streamToBuffer } from '@hydrooj/utils/lib/utils';
 import {
     BadRequestError, ContestNotAttendedError, ContestNotEndedError, ContestNotFoundError, ContestNotLiveError,
-    FileLimitExceededError, HackFailedError, NoProblemError, NotFoundError,
+    FileLimitExceededError, HackFailedError, NoProblemError, NoteNotFoundError, NotFoundError,
     PermissionError, ProblemAlreadyExistError, ProblemAlreadyUsedByContestError, ProblemConfigError,
     ProblemIsReferencedError, ProblemNotAllowLanguageError, ProblemNotAllowPretestError, ProblemNotFoundError,
     RecordNotFoundError, SolutionNotFoundError, ValidationError,
@@ -23,6 +23,7 @@ import { PERM, PRIV, STATUS } from '../model/builtin';
 import * as contest from '../model/contest';
 import * as discussion from '../model/discussion';
 import domain from '../model/domain';
+import note from '../model/note';
 import * as oplog from '../model/oplog';
 import problem from '../model/problem';
 import record from '../model/record';
@@ -368,16 +369,19 @@ export class ProblemDetailHandler extends ContestDetailBaseHandler {
             problem.getStatus(domainId, this.pdoc.docId, this.user._id),
             user.getById(domainId, this.pdoc.owner),
         ]);
-        const [scnt, dcnt] = await Promise.all([
+        const [scnt, ncnt, dcnt] = await Promise.all([
             solution.count(domainId, { parentId: this.pdoc.docId }),
+            note.count(domainId, { parentId: this.pdoc.docId, owner: this.user._id }),
             discussion.count(domainId, { parentId: this.pdoc.docId }),
         ]);
+
         this.response.body = {
             pdoc: this.pdoc,
             udoc: this.udoc,
             psdoc: tid ? null : this.psdoc,
             title: this.pdoc.title,
             solutionCount: scnt,
+            noteCount: ncnt,
             discussionCount: dcnt,
             tdoc: this.tdoc,
             owner_udoc: (tid && this.tdoc.owner !== this.pdoc.owner) ? await user.getById(domainId, this.tdoc.owner) : null,
@@ -959,6 +963,126 @@ export class ProblemSolutionHandler extends ProblemDetailHandler {
     }
 }
 
+export class ProblemNoteHandler extends ProblemDetailHandler {
+    @param('page', Types.PositiveInt, true)
+    @param('tid', Types.ObjectId, true)
+    @param('sid', Types.ObjectId, true)
+    async get(domainId: string, page = 1, tid?: ObjectId, sid?: ObjectId) {
+        if (tid) throw new PermissionError(PERM.PERM_VIEW_PROBLEM_SOLUTION);
+        this.response.template = 'problem_note.html';
+        const accepted = this.psdoc?.status === STATUS.STATUS_ACCEPTED;
+        if (!accepted || !this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION_ACCEPT)) {
+            this.checkPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION);
+        }
+        // eslint-disable-next-line prefer-const
+        let [psdocs, pcount, pscount] = await paginate(
+            note.getMulti(domainId, this.pdoc.docId, { owner: this.user._id }),
+            page,
+            system.get('pagination.note'),
+        );
+        if (sid) {
+            psdocs = [await note.get(domainId, sid)];
+            if (!psdocs[0]) throw new NoteNotFoundError(domainId, sid);
+        }
+        const uids = [this.pdoc.owner];
+        const docids = [];
+        for (const psdoc of psdocs) {
+            docids.push(psdoc.docId);
+            uids.push(psdoc.owner);
+            if (psdoc.reply.length) {
+                for (const psrdoc of psdoc.reply) uids.push(psrdoc.owner);
+            }
+        }
+        const udict = await user.getList(domainId, uids);
+        const pssdict = await note.getListStatus(domainId, docids, this.user._id);
+        const lastDocs = psdocs.filter((x) => x.owner === this.user._id);
+        this.response.body = {
+            psdocs: lastDocs,
+            page,
+            pcount,
+            pscount,
+            udict,
+            pssdict,
+            pdoc: this.pdoc,
+            sid,
+        };
+    }
+
+    @param('content', Types.Content)
+    async postSubmit(domainId: string, content: string) {
+        this.checkPerm(PERM.PERM_CREATE_PROBLEM_SOLUTION);
+        const psid = await note.add(domainId, this.pdoc.docId, this.user._id, content);
+        this.back({ psid });
+    }
+
+    @param('content', Types.Content)
+    @param('psid', Types.ObjectId)
+    async postEditNote(domainId: string, content: string, psid: ObjectId) {
+        let psdoc = await note.get(domainId, psid);
+        if (!this.user.own(psdoc)) this.checkPerm(PERM.PERM_EDIT_PROBLEM_SOLUTION);
+        else this.checkPerm(PERM.PERM_EDIT_PROBLEM_SOLUTION_SELF);
+        psdoc = await note.edit(domainId, psdoc.docId, content);
+        this.back({ psdoc });
+    }
+
+    @param('psid', Types.ObjectId)
+    async postDeleteNote(domainId: string, psid: ObjectId) {
+        const psdoc = await note.get(domainId, psid);
+        if (!this.user.own(psdoc)) this.checkPerm(PERM.PERM_DELETE_PROBLEM_SOLUTION);
+        else this.checkPerm(PERM.PERM_DELETE_PROBLEM_SOLUTION_SELF);
+        await note.del(domainId, psdoc.docId);
+        this.back();
+    }
+
+    @param('psid', Types.ObjectId)
+    @param('content', Types.Content)
+    async postReply(domainId: string, psid: ObjectId, content: string) {
+        this.checkPerm(PERM.PERM_REPLY_PROBLEM_SOLUTION);
+        const psdoc = await note.get(domainId, psid);
+        await note.reply(domainId, psdoc.docId, this.user._id, content);
+        this.back();
+    }
+
+    @param('psid', Types.ObjectId)
+    @param('psrid', Types.ObjectId)
+    @param('content', Types.Content)
+    async postEditReply(domainId: string, psid: ObjectId, psrid: ObjectId, content: string) {
+        const [psdoc, psrdoc] = await note.getReply(domainId, psid, psrid);
+        if ((!psdoc) || psdoc.parentId !== this.pdoc.docId) throw new SolutionNotFoundError(domainId, psid);
+        if (!(this.user.own(psrdoc)
+            && this.user.hasPerm(PERM.PERM_EDIT_PROBLEM_SOLUTION_REPLY_SELF))) {
+            throw new PermissionError(PERM.PERM_EDIT_PROBLEM_SOLUTION_REPLY_SELF);
+        }
+        await note.editReply(domainId, psid, psrid, content);
+        this.back();
+    }
+
+    @param('psid', Types.ObjectId)
+    @param('psrid', Types.ObjectId)
+    async postDeleteReply(domainId: string, psid: ObjectId, psrid: ObjectId) {
+        const [psdoc, psrdoc] = await note.getReply(domainId, psid, psrid);
+        if ((!psdoc) || psdoc.parentId !== this.pdoc.docId) throw new NoteNotFoundError(psid);
+        if (!(this.user.own(psrdoc)
+            && this.user.hasPerm(PERM.PERM_DELETE_PROBLEM_SOLUTION_REPLY_SELF))) {
+            this.checkPerm(PERM.PERM_DELETE_PROBLEM_SOLUTION_REPLY);
+        }
+        await note.delReply(domainId, psid, psrid);
+        this.back();
+    }
+
+    @param('psid', Types.ObjectId)
+    async postUpvote(domainId: string, psid: ObjectId) {
+        const [psdoc, pssdoc] = await note.vote(domainId, psid, this.user._id, 1);
+        this.back({ vote: psdoc.vote, user_vote: pssdoc.vote });
+    }
+
+    @param('psid', Types.ObjectId)
+    async postDownvote(domainId: string, psid: ObjectId) {
+        const [psdoc, pssdoc] = await note.vote(domainId, psid, this.user._id, -1);
+        this.back({ vote: psdoc.vote, user_vote: pssdoc.vote });
+    }
+}
+
 export class ProblemSolutionRawHandler extends ProblemDetailHandler {
     @param('psid', Types.ObjectId)
     @route('psrid', Types.ObjectId, true)
@@ -970,11 +1094,32 @@ export class ProblemSolutionRawHandler extends ProblemDetailHandler {
             this.checkPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION);
         }
         if (psrid) {
-            const [psdoc, psrdoc] = await solution.getReply(domainId, psid, psrid);
+            const [psdoc, psrdoc] = await note.getReply(domainId, psid, psrid);
             if ((!psdoc) || psdoc.parentId !== this.pdoc.docId) throw new SolutionNotFoundError(psid, psrid);
             this.response.body = psrdoc.content;
         } else {
-            const psdoc = await solution.get(domainId, psid);
+            const psdoc = await note.get(domainId, psid);
+            this.response.body = psdoc.content;
+        }
+        this.response.type = 'text/markdown';
+    }
+}
+export class ProblemNoteRawHandler extends ProblemDetailHandler {
+    @param('psid', Types.ObjectId)
+    @route('psrid', Types.ObjectId, true)
+    @param('tid', Types.ObjectId, true)
+    async get(domainId: string, psid: ObjectId, psrid?: ObjectId, tid?: ObjectId) {
+        if (tid) throw new PermissionError(PERM.PERM_VIEW_PROBLEM_SOLUTION);
+        const accepted = this.psdoc?.status === STATUS.STATUS_ACCEPTED;
+        if (!accepted || !this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION_ACCEPT)) {
+            this.checkPerm(PERM.PERM_VIEW_PROBLEM_SOLUTION);
+        }
+        if (psrid) {
+            const [psdoc, psrdoc] = await note.getReply(domainId, psid, psrid);
+            if ((!psdoc) || psdoc.parentId !== this.pdoc.docId) throw new NoteNotFoundError(psid, psrid);
+            this.response.body = psrdoc.content;
+        } else {
+            const psdoc = await note.get(domainId, psid);
             this.response.body = psdoc.content;
         }
         this.response.type = 'text/markdown';
@@ -1056,6 +1201,10 @@ export async function apply(ctx) {
     ctx.Route('problem_solution_detail', '/p/:pid/solution/:sid', ProblemSolutionHandler, PERM.PERM_VIEW_PROBLEM);
     ctx.Route('problem_solution_raw', '/p/:pid/solution/:psid/raw', ProblemSolutionRawHandler, PERM.PERM_VIEW_PROBLEM);
     ctx.Route('problem_solution_reply_raw', '/p/:pid/solution/:psid/:psrid/raw', ProblemSolutionRawHandler, PERM.PERM_VIEW_PROBLEM);
+    ctx.Route('problem_note', '/p/:pid/note', ProblemNoteHandler, PERM.PERM_VIEW_PROBLEM);
+    ctx.Route('problem_note_detail', '/p/:pid/note/:sid', ProblemNoteHandler, PERM.PERM_VIEW_PROBLEM);
+    ctx.Route('problem_note_raw', '/p/:pid/note/:psid/raw', ProblemNoteRawHandler, PERM.PERM_VIEW_PROBLEM);
+    ctx.Route('problem_note_reply_raw', '/p/:pid/note/:psid/:psrid/raw', ProblemNoteRawHandler, PERM.PERM_VIEW_PROBLEM);
     ctx.Route('problem_create', '/problem/create', ProblemCreateHandler, PERM.PERM_CREATE_PROBLEM);
     ctx.Route('problem_prefix_list', '/problem/list', ProblemPrefixListHandler, PERM.PERM_VIEW_PROBLEM);
 }

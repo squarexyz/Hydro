@@ -1,5 +1,5 @@
 {% extends "layout/basic.html" %}
-{% import "components/comments_solution.html" as comments with context %}
+{% import "components/comments_notion.html" as comments with context %}
 {% block content %}
 <div class="row">
   <div class="medium-9 columns">
@@ -14,7 +14,7 @@
           udict = udict,
           comment_ref = 'psid',
           reply_ref = 'psrid',
-          comment_placeholder = 'Write Your Solution',
+          comment_placeholder = 'Write Your Note',
           comment_post_op = 'submit',
           comment_edit_op = 'edit_note',
           comment_post_text = 'Share',

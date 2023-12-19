@@ -6,7 +6,7 @@ import { NamedPage } from 'vj/misc/Page';
 import { i18n, request, tpl } from 'vj/utils';
 
 const page = new NamedPage([
-  'problem_create', 'problem_edit', 'problem_solution', 'problem_submit',
+  'problem_create', 'problem_edit', 'problem_solution', 'problem_note', 'problem_submit',
   'problem_files', 'problem_detail', 'discussion_node', 'discussion_detail',
 ], () => {
   $(document).on('click', '[name="problem-sidebar__show-category"]', (ev) => {

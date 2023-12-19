@@ -278,6 +278,7 @@ SystemSetting(
     Setting('setting_basic', 'pagination.discussion', 50, 'number', 'pagination.discussion', 'Discussions per page'),
     Setting('setting_basic', 'pagination.record', 100, 'number', 'pagination.record', 'Records per page'),
     Setting('setting_basic', 'pagination.solution', 20, 'number', 'pagination.solution', 'Solutions per page'),
+    Setting('setting_basic', 'pagination.note', 20, 'number', 'pagination.note', 'Notes per page'),
     Setting('setting_basic', 'pagination.training', 10, 'number', 'pagination.training', 'Trainings per page'),
     Setting('setting_basic', 'pagination.reply', 50, 'number', 'pagination.reply', 'Replies per page'),
     Setting('setting_session', 'session.keys', [String.random(32)], 'text', 'session.keys', 'session.keys', FLAG_HIDDEN),

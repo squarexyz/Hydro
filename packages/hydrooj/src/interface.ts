@@ -722,6 +722,7 @@ export interface Model {
     record: typeof import('./model/record').default,
     setting: typeof import('./model/setting'),
     solution: typeof import('./model/solution').default,
+    note: typeof import('./model/note').default,
     system: typeof import('./model/system'),
     task: typeof import('./model/task').default,
     schedule: typeof import('./model/schedule').default;

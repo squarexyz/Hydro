@@ -31,10 +31,13 @@ export const TYPE_CONTEST_CLARIFICATION: 31 = 31;
 export const TYPE_TRAINING: 40 = 40;
 /** @deprecated use `TYPE_CONTEST` with rule `homework` instead. */
 export const TYPE_HOMEWORK: 60 = 60;
+// Note
+export const TYPE_PROBLEM_NOTE: 89 = 89;
 
 export interface DocType {
     [TYPE_PROBLEM]: ProblemDoc;
     [TYPE_PROBLEM_SOLUTION]: any;
+    [TYPE_PROBLEM_NOTE]: any;
     [TYPE_PROBLEM_LIST]: any;
     [TYPE_DISCUSSION_NODE]: any;
     [TYPE_DISCUSSION]: DiscussionDoc;
@@ -444,6 +447,8 @@ export async function apply(ctx: Context) {
         { key: { domainId: 1, docType: 1, hidden: 1, tag: 1, sort: 1 }, name: 'hidden', sparse: true },
         // For problem solution
         { key: { domainId: 1, docType: 1, parentType: 1, parentId: 1, vote: -1, docId: -1 }, name: 'solution', sparse: true },
+        // For problem note
+        { key: { domainId: 1, docType: 1, parentType: 1, parentId: 1, vote: -1, docId: -1 }, name: 'note', sparse: true },
         // For discussion
         { key: { domainId: 1, docType: 1, pin: -1, docId: -1 }, name: 'discussionSort', sparse: true },
         { key: { domainId: 1, docType: 1, parentType: 1, parentId: 1, pin: -1, docId: -1 }, name: 'discussionNodeSort', sparse: true },
@@ -508,5 +513,6 @@ global.Hydro.model.document = {
     TYPE_PROBLEM,
     TYPE_PROBLEM_LIST,
     TYPE_PROBLEM_SOLUTION,
+    TYPE_PROBLEM_NOTE,
     TYPE_TRAINING,
 };
