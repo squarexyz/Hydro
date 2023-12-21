@@ -375,7 +375,10 @@ export class ContestScoreboardHandler extends ContestDetailBaseHandler {
             `@submissions ${submissions.length}`,
         ].concat(
             tdoc.pids.map((i, idx) => `@p ${pid(idx)},${escape(pdict[i]?.title || 'Unknown Problem')},20,0`),
-            teams.map((i, idx) => `@t ${idx + 1},0,1,${escape(udict[i.uid].school || unknownSchool)}-${escape(udict[i.uid].uname)}`),
+            teams.map((i, idx) => {
+                const teamName = `${i.rank ? '*' : ''}${escape(udict[i.uid].school || unknownSchool)}-${escape(udict[i.uid].uname)}`;
+                return `@t ${idx + 1},0,1,${teamName}`;
+            }),
             submissions,
         );
         this.binary(res.join('\n'), `${this.tdoc.title}.ghost`);
@@ -473,6 +476,7 @@ export class ContestEditHandler extends Handler {
         if (beginAtMoment.isSameOrAfter(endAt)) throw new ValidationError('duration');
         const beginAt = beginAtMoment.toDate();
         const lockAt = lock ? moment(endAt).add(-lock, 'minutes').toDate() : null;
+        if (lockAt && contestDuration) throw new ValidationError('lockAt', 'duration');
         await problem.getList(domainId, pids, this.user.hasPerm(PERM.PERM_VIEW_PROBLEM_HIDDEN) || this.user._id, true);
         if (tid) {
             await contest.edit(domainId, tid, {
