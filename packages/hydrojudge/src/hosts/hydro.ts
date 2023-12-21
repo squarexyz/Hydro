@@ -10,6 +10,7 @@ import * as sysinfo from '@hydrooj/utils/lib/sysinfo';
 import type { JudgeResultBody } from 'hydrooj';
 import { getConfig } from '../config';
 import { FormatError, SystemError } from '../error';
+import { Session } from '../interface';
 import log from '../log';
 import { JudgeTask } from '../task';
 import { Lock } from '../utils';
@@ -18,7 +19,7 @@ function removeNixPath(text: string) {
     return text.replace(/\/nix\/store\/[a-z0-9]{32}-/g, '/nix/');
 }
 
-export default class Hydro {
+export default class Hydro implements Session {
     ws: WebSocket;
     language: Record<string, LangConfig>;
 
@@ -36,11 +37,12 @@ export default class Hydro {
         return superagent.get(url).set('Cookie', this.config.cookie);
     }
 
-    post(url: string, data: any) {
+    post(url: string, data?: any) {
         url = new URL(url, this.config.server_url).toString();
-        return superagent.post(url).send(data)
+        const t = superagent.post(url)
             .set('Cookie', this.config.cookie)
             .set('Accept', 'application/json');
+        return data ? t.send(data) : t;
     }
 
     async init() {
@@ -134,6 +136,13 @@ export default class Hydro {
         return target;
     }
 
+    async postFile(target: string, filename: string, file: string) {
+        await this.post('judge/upload')
+            .field('rid', target)
+            .field('name', filename)
+            .attach('file', fs.createReadStream(file));
+    }
+
     getLang(name: string, doThrow = true) {
         if (this.language[name]) return this.language[name];
         if (name === 'cpp' && this.language.cc) return this.language.cc;
@@ -157,6 +166,8 @@ export default class Hydro {
             if (performanceMode && data.case && !data.compilerText && !data.message) {
                 t.callbackCache ||= [];
                 t.callbackCache.push(data.case);
+                // TODO use rate-limited send
+                // FIXME handle fields like score, time, memory, etc
             } else {
                 this.send(t.request.rid, 'next', data);
             }
@@ -178,9 +189,10 @@ export default class Hydro {
                 Authorization: `Bearer ${this.config.cookie.split('sid=')[1].split(';')[0]}`,
             },
         });
-        const config: { prio?: number, concurrency?: number } = {};
+        const config: { prio?: number, concurrency?: number, lang?: string[] } = {};
         if (this.config.minPriority !== undefined) config.prio = this.config.minPriority;
         if (this.config.concurrency !== undefined) config.concurrency = this.config.concurrency;
+        if (this.config.lang?.length) config.lang = this.config.lang;
         const content = Object.keys(config).length
             ? JSON.stringify({ key: 'config', ...config })
             : '{"key":"ping"}';
